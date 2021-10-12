@@ -1,0 +1,29 @@
+﻿@model List<UserViewModel>
+
+@{
+    ViewData["Title"] = "Invites";
+}
+<div class="mb-3">
+    <h1 class="mb-3"></h1>
+    <a class="btn btn-light btn-sm" asp-controller="Invite" asp-action="New">New Invite</a>
+</div>
+<div>
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Display Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.Id</td><td>@item.DisplayName</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
