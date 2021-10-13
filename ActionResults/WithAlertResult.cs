@@ -1,11 +1,13 @@
 
 using System.Threading.Tasks;
+using com.loitzl.userinviter.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace com.loitzl.userinviter
 {
+
     public class WithAlertResult : IActionResult
     {
         public IActionResult Result { get; }
@@ -40,6 +42,7 @@ namespace com.loitzl.userinviter
 
     public static class AlertExtensions
     {
+
         public static IActionResult WithError(this IActionResult result,
                                             string message,
                                             string debugInfo = null)
@@ -47,19 +50,6 @@ namespace com.loitzl.userinviter
             return Alert(result, "danger", message, debugInfo);
         }
 
-        public static IActionResult WithSuccess(this IActionResult result,
-                                            string message,
-                                            string debugInfo = null)
-        {
-            return Alert(result, "success", message, debugInfo);
-        }
-
-        public static IActionResult WithInfo(this IActionResult result,
-                                            string message,
-                                            string debugInfo = null)
-        {
-            return Alert(result, "info", message, debugInfo);
-        }
 
         private static IActionResult Alert(IActionResult result,
                                         string type,

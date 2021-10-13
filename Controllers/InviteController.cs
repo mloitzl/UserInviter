@@ -77,10 +77,8 @@ namespace com.loitzl.userinviter.Controllers
         [AuthorizeForScopes(Scopes = new[] { "User.Invite.All" })]
         public async Task<IActionResult> New([Bind("RedirectUri,Email")] NewInviteViewModel newEvent)
         {
-            // if (!string.IsNullOrEmpty(newEvent.Email))
-            // {
-            var successes = new List<IActionResult>();
-            var errors = new List<IActionResult>();
+            var results = new ResultsViewModel();
+
             var invitees = newEvent.Email.Split(';', StringSplitOptions.RemoveEmptyEntries);
 
             foreach (var invitee in invitees)
@@ -98,9 +96,12 @@ namespace com.loitzl.userinviter.Controllers
                         .Request()
                         .AddAsync(invitation);
 
-                    successes.Add(new RedirectToActionResult("Index", "Invite", new object()).WithSuccess($"User {invitee} invited"));
+                    results.Results.Add(new ResultViewModel
+                    {
+                        Type = ResultType.Success,
+                        Message = $"User {invitee} invited"
+                    });
 
-                    // return RedirectToAction("Index").WithSuccess($"User {invitee} invited");
                 }
                 catch (ServiceException ex)
                 {
@@ -109,18 +110,17 @@ namespace com.loitzl.userinviter.Controllers
                         throw;
                     }
 
-                    errors.Add(
-                        new RedirectToActionResult("Index", "Invite", new object())
-                                .WithError("Error creating event", ex.Error.Message));
+                    results.Results.Add(new ResultViewModel
+                    {
+                        Type = ResultType.Error,
+                        Message = $"Error inviting {invitee}",
+                        Exception = ex
+                    });
                 }
             }
 
 
-            if (successes.Any()) return successes.First();
-            if (errors.Any()) return errors.First();
-
-            return StatusCode(500);
-            // }
+            return RedirectToAction("Index").WithOutcome(results);
         }
     }
 }
