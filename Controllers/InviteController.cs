@@ -30,7 +30,7 @@ namespace com.loitzl.userinviter.Controllers
                                 .Users
                                 .Request()
                                 // .Filter("identities/any(c:c/issuerAssignedId eq 'j.smith@yahoo.com' and c/issuer eq 'contoso.onmicrosoft.com')")
-                                .Filter("UserState eq 'PendingAcceptance'")
+                                //.Filter("UserState eq 'PendingAcceptance'")
                                 .Select("displayName,id,userPrincipalName")
                                 .GetAsync();
 
@@ -91,7 +91,7 @@ namespace com.loitzl.userinviter.Controllers
                     {
                         InvitedUserEmailAddress = invitee,
                         InviteRedirectUrl = newEvent.RedirectUri.ToString(),
-                        SendInvitationMessage = true
+                        SendInvitationMessage = true,
                     };
 
                     var invitationResult = await _graphClient.Invitations
