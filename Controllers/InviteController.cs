@@ -30,7 +30,8 @@ namespace com.loitzl.userinviter.Controllers
                                 .Users
                                 .Request()
                                 // .Filter("identities/any(c:c/issuerAssignedId eq 'j.smith@yahoo.com' and c/issuer eq 'contoso.onmicrosoft.com')")
-                                .Select("displayName,id")
+                                .Filter("UserState eq 'PendingAcceptance'")
+                                .Select("displayName,id,userPrincipalName")
                                 .GetAsync();
 
             return users.CurrentPage;
@@ -76,39 +77,50 @@ namespace com.loitzl.userinviter.Controllers
         [AuthorizeForScopes(Scopes = new[] { "User.Invite.All" })]
         public async Task<IActionResult> New([Bind("RedirectUri,Email")] NewInviteViewModel newEvent)
         {
-            if (!string.IsNullOrEmpty(newEvent.Email))
-            {
-                var attendees =
-                    newEvent.Email.Split(';', StringSplitOptions.RemoveEmptyEntries);
+            // if (!string.IsNullOrEmpty(newEvent.Email))
+            // {
+            var successes = new List<IActionResult>();
+            var errors = new List<IActionResult>();
+            var invitees = newEvent.Email.Split(';', StringSplitOptions.RemoveEmptyEntries);
 
-                if (attendees.Length > 0)
+            foreach (var invitee in invitees)
+            {
+                try
                 {
+                    var invitation = new Invitation
+                    {
+                        InvitedUserEmailAddress = invitee,
+                        InviteRedirectUrl = newEvent.RedirectUri.ToString(),
+                        SendInvitationMessage = true
+                    };
+
+                    var invitationResult = await _graphClient.Invitations
+                        .Request()
+                        .AddAsync(invitation);
+
+                    successes.Add(new RedirectToActionResult("Index", "Invite", new object()).WithSuccess($"User {invitee} invited"));
+
+                    // return RedirectToAction("Index").WithSuccess($"User {invitee} invited");
+                }
+                catch (ServiceException ex)
+                {
+                    if (ex.InnerException is MicrosoftIdentityWebChallengeUserException)
+                    {
+                        throw;
+                    }
+
+                    errors.Add(
+                        new RedirectToActionResult("Index", "Invite", new object())
+                                .WithError("Error creating event", ex.Error.Message));
                 }
             }
 
 
-            // todo: foreach user
-            try
-            {
-                var invitation = new Invitation
-                {
-                    InvitedUserEmailAddress = "",
-                    InviteRedirectUrl = "https://myapp.contoso.com"
-                };
+            if (successes.Any()) return successes.First();
+            if (errors.Any()) return errors.First();
 
-                await _graphClient.Invitations
-                    .Request()
-                    .AddAsync(invitation);
-
-                // Redirect to the calendar view with a success message
-                return RedirectToAction("Index").WithSuccess("Event created");
-            }
-            catch (ServiceException ex)
-            {
-                // Redirect to the calendar view with an error message
-                return RedirectToAction("Index")
-                    .WithError("Error creating event", ex.Error.Message);
-            }
+            return StatusCode(500);
+            // }
         }
     }
 }
